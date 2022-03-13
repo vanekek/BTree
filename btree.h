@@ -24,7 +24,6 @@ typedef struct node {
 typedef struct {
 	node_t *root;
 	unsigned int order;
-	boolean lock;
 } btree_t;
 
 typedef struct {
@@ -38,12 +37,13 @@ node_t* create_node();
 btree_t* create_btree();
 
 result_t* get_resultset();
+result_t* search(int key, node_t *node);
 
 void print_node(node_t* n);
 
 node_t* insert(int key, btree_t* node);
 
-node_t* delete(int key, btree_t* b);
+node_t* node_delete(int key, btree_t* tree);
 
 
 
