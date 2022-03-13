@@ -41,6 +41,8 @@ result_t* search(int key, node_t *node);
 
 void print_node(node_t* n);
 
+void split_child(node_t* parent_node, int i, node_t* child_array);
+void insert_nonfull(int key, node_t* n);
 node_t* insert(int key, btree_t* node);
 
 node_t* node_delete(int key, btree_t* tree);
