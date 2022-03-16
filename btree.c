@@ -61,6 +61,17 @@ result_t* get_resultset() {
 	return ret;
 }
 
+void print_resultset(result_t* res) {
+	if (res->found == FALSE) {
+		printf("Key is not found in btree.\n\n");
+	} else {
+		printf("Key %d has succesfully found in btree !\n", res->key);
+		printf("Depth: %d\n", res->depth);
+		printf("Key is in node: %d", res->node_pointer);
+		printf("\n\n");
+	}
+}
+
 void print_node(node_t* n) {
     int i, q;
 
@@ -150,31 +161,32 @@ void split_child(node_t* parent_node, int i, node_t* child_array) { //It means i
 }
 
 void insert_nonfull(int key, node_t* n) {
-    int i = n->key_index;
-	
-	if(n->leaf){
-		while((i >= 1) && (key < n->key_array[i-1])){
-			n->key_array[i] = n->key_array[i-1];
-			i--;
-		}
-		n->key_array[i] = key;
-		n->key_index++;
-	} else {
-		while((i >= 1) && (key < n->key_array[i-1])){
-			i--;
-		}
-		if(n->child_array[i]->key_index == NODE_KEYS){
-			split_child(n, i+1, n->child_array[i]);
-			if(key > n->key_array[i]){
-				i++;
+	   	int i = n->key_index;
+
+		if(n->leaf){
+			while((i >= 1) && (key < n->key_array[i-1])){
+				n->key_array[i] = n->key_array[i-1];
+				i--;
 			}
-		}
-		insert_nonfull(key, n->child_array[i]);
+			n->key_array[i] = key;
+			n->key_index++;
+		} else {
+			while((i >= 1) && (key < n->key_array[i-1])){
+				i--;
+			}
+			if(n->child_array[i]->key_index == NODE_KEYS){
+				split_child(n, i+1, n->child_array[i]);
+				if(key > n->key_array[i]){
+					i++;
+				}
+			}
+			insert_nonfull(key, n->child_array[i]);
+	}
 }
+
 
 node_t* insert(int key, btree_t* b) {
 	node_t* root = b->root;
-
 	if(root->key_index == NODE_KEYS){
 		node_t* newNode = create_node();
 		b->root = newNode;
@@ -182,11 +194,10 @@ node_t* insert(int key, btree_t* b) {
 		newNode->key_index = 0;
 		newNode->child_array[0] = root;
 		split_child(newNode, 1, root);
-		insert_nonfull(newNode, key);
+		insert_nonfull(key, newNode);
 	} else {
-		insert_nonfull(b->root, key);
+		insert_nonfull(key, b->root);
 	}
-
 	return b->root;
 }
 
@@ -198,7 +209,7 @@ void merge_children(node_t* root, int index, node_t* child1, node_t* child2) {
 		child1->key_array[i] = child2->key_array[i-NODE_ORDER];
 	child1->key_array[NODE_ORDER-1] = root->key_array[index]; 
 	
-	if(child2->leaf == false){
+	if(child2->leaf == FALSE){
 		for(i=NODE_ORDER;i<NODE_POINTERS;i++)
 			child1->child_array[i] = child2->child_array[i-NODE_ORDER];
 	}
@@ -220,7 +231,7 @@ void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPt
 
 	root->key_array[index] = leftPtr->key_array[leftPtr->key_index-1];
 
-	if(leftPtr->leaf == false)
+	if(leftPtr->leaf == FALSE)
 		for(i=curPtr->key_index;i>0;i--)
 			curPtr->child_array[i] = curPtr->child_array[i-1];
 	curPtr->child_array[0] = leftPtr->child_array[leftPtr->key_index];
@@ -251,10 +262,8 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 
 	int i;
 	
-	if(root->leaf == true){
+	if(root->leaf == TRUE){
 		i=0;
-		node_t* prePtr = NULL;
-		node_t* nexPtr = NULL;
 
 		while( (i < root->key_index) && (X > root->key_array[i])) {
 			i++;
@@ -270,7 +279,8 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 		}
 	} else {  
 		i = 0;
-		
+		node_t* prePtr = NULL;
+		node_t* nexPtr = NULL;
 		while ( (i < root->key_index) && (X > root->key_array[i]) ) i++;
 		
 		if ( (i < root->key_index) && (X == root->key_array[i]) ) {
@@ -303,7 +313,7 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 				else if( (nexPtr != NULL) && (nexPtr->key_index > NODE_ORDER-1))
 					BTreeBorrowFromRight(root,i,nexPtr,prePtr);
 				else if(preprePtr != NULL){
-					merge_children(root,i-1,leftBro,prePtr);
+					merge_children(root,i-1,preprePtr,prePtr);
 					prePtr = preprePtr;
 				} else
 					merge_children(root,i,prePtr,nexPtr);
@@ -314,7 +324,7 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 }
 
 int BTreeGetLeftMax(node_t* T){
-	if(T->leaf == false){
+	if(T->leaf == FALSE){
 		return BTreeGetLeftMax(T->child_array[T->key_index]);
 	}else{
 		return T->key_array[T->key_index-1];
@@ -322,7 +332,7 @@ int BTreeGetLeftMax(node_t* T){
 }
 
 int BTreeGetRightMin(node_t* T){
-	if(T->leaf == false){
+	if(T->leaf == FALSE){
 		return BTreeGetRightMin(T->child_array[0]);
 	}else{
 		return T->key_array[0];

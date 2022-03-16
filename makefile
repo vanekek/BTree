@@ -7,4 +7,4 @@ tests.o: tests.c
 stack.o: btree.c
 	gcc $(CFLAGS) -c btree.c -o btree.o 
 clean: 
-	rm -rf tests stack *.o *.gcov *.gcda *.gcno
+	rm -rf tests btree *.o *.gcov *.gcda *.gcno

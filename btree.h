@@ -37,6 +37,7 @@ node_t* create_node();
 btree_t* create_btree();
 
 result_t* get_resultset();
+void print_resultset(result_t* res);
 result_t* search(int key, node_t *node);
 
 void print_node(node_t* n);
