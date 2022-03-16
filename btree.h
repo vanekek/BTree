@@ -45,7 +45,14 @@ void split_child(node_t* parent_node, int i, node_t* child_array);
 void insert_nonfull(int key, node_t* n);
 node_t* insert(int key, btree_t* node);
 
-node_t* node_delete(int key, btree_t* tree);
+void merge_children(node_t* root, int index, node_t* child1, node_t* child2);
+void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr);
+void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* curPtr);
+void BTreeDeleteNoNone(int X, node_t* root);
+node_t* delete(int key, btree_t* tree);
+
+int BTreeGetLeftMax(node_t *T);
+int BTreeGetRightMin(node_t *T);
 
 
 
