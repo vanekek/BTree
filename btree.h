@@ -23,7 +23,6 @@ typedef struct node {
 
 typedef struct {
 	node_t *root;
-	unsigned int order;
 } btree_t;
 
 typedef struct {
@@ -38,7 +37,7 @@ btree_t* create_btree();
 
 result_t* get_resultset();
 void print_resultset(result_t* res);
-result_t* search(int key, node_t *node);
+void search(int key, node_t *node);
 
 void print_node(node_t* n);
 
@@ -54,6 +53,9 @@ node_t* delete(int key, btree_t* tree);
 
 int BTreeGetLeftMax(node_t *T);
 int BTreeGetRightMin(node_t *T);
+
+void node_delete(node_t* node);
+void btree_delete(btree_t* T);
 
 
 

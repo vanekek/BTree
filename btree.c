@@ -39,7 +39,6 @@ btree_t* create_btree() {
 		return NULL;
 	}
 
-	new_root->order = NODE_ORDER;
 	new_root->root = head;
 
 	return new_root;
@@ -67,7 +66,7 @@ void print_resultset(result_t* res) {
 	} else {
 		printf("Key %d has succesfully found in btree !\n", res->key);
 		printf("Depth: %d\n", res->depth);
-		printf("Key is in node: %d", res->node_pointer);
+		printf("Key is in node: %lx", (unsigned long int)res->node_pointer);
 		printf("\n\n");
 	}
 }
@@ -94,14 +93,14 @@ void print_node(node_t* n) {
 		printf(" NONE");
 	}else{
 		for(q = 0; q < NODE_POINTERS; q++){
-			printf(" [%d : %x]", q, n->child_array[q]);
+			printf(" [%d : %lx]", q, (unsigned long int)n->child_array[q]);
 		}
 	}
 
 	printf("\n\n");
 }
 
-result_t* search(int key, node_t *node) {
+void search(int key, node_t *node) {
 
 	int i = 0;
 
@@ -109,22 +108,25 @@ result_t* search(int key, node_t *node) {
 		i++;
 	}
 
+	if(i == 6){
+		i--;
+	}
+
 	if((i <= node->key_index) && (key == node->key_array[i])){
 		result_t *result = get_resultset();
 		result->node_pointer = node;
-		result->key = i;
+		result->key = key;
 		result->found = TRUE;
-		return result;
-	}
-
-	if(node->leaf == TRUE){
+		print_resultset(result);
+		free(result);
+	} else if(node->leaf == TRUE){
 		result_t *result = get_resultset();
 		result->node_pointer = node;
 		result->found = FALSE;
-		return result;
+		print_resultset(result);
+		free(result);
 	} else {
-		result_t *result = get_resultset();
-		return search(key, node->child_array[i]);
+		search(key, node->child_array[i]);
 	}
 }
 
@@ -163,7 +165,7 @@ void split_child(node_t* parent_node, int i, node_t* child_array) { //It means i
 void insert_nonfull(int key, node_t* n) {
 	   	int i = n->key_index;
 
-		if(n->leaf){
+		if(n->leaf == TRUE){
 			while((i >= 1) && (key < n->key_array[i-1])){
 				n->key_array[i] = n->key_array[i-1];
 				i--;
@@ -190,7 +192,7 @@ node_t* insert(int key, btree_t* b) {
 	if(root->key_index == NODE_KEYS){
 		node_t* newNode = create_node();
 		b->root = newNode;
-		newNode->leaf = 0;
+		newNode->leaf = FALSE;
 		newNode->key_index = 0;
 		newNode->child_array[0] = root;
 		split_child(newNode, 1, root);
@@ -258,6 +260,22 @@ void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* cur
 	rightPtr->key_index--;
 }
 
+int BTreeGetLeftMax(node_t* T){
+	if(T->leaf == FALSE){
+		return BTreeGetLeftMax(T->child_array[T->key_index]);
+	}else{
+		return T->key_array[T->key_index-1];
+	}
+}
+
+int BTreeGetRightMin(node_t* T){
+	if(T->leaf == FALSE){
+		return BTreeGetRightMin(T->child_array[0]);
+	}else{
+		return T->key_array[0];
+	}
+}
+
 void BTreeDeleteNoNone(int X, node_t* root) {
 
 	int i;
@@ -274,7 +292,7 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 				root->key_array[i] = root->key_array[i+1];
 			root->key_index--;
 		} else {
-			printf("Key is not found.\n");
+			printf("Key is not found.\n\n");
 			return;
 		}
 	} else {  
@@ -323,22 +341,6 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 	}
 }
 
-int BTreeGetLeftMax(node_t* T){
-	if(T->leaf == FALSE){
-		return BTreeGetLeftMax(T->child_array[T->key_index]);
-	}else{
-		return T->key_array[T->key_index-1];
-	}
-}
-
-int BTreeGetRightMin(node_t* T){
-	if(T->leaf == FALSE){
-		return BTreeGetRightMin(T->child_array[0]);
-	}else{
-		return T->key_array[0];
-	}
-}
-
 node_t* delete(int key, btree_t* b) {
 	if(b->root->key_index == 1){
 		node_t* child1 = b->root->child_array[0];
@@ -354,4 +356,18 @@ node_t* delete(int key, btree_t* b) {
 	}
 	BTreeDeleteNoNone(key, b->root);
 	return b->root;
+}
+
+void node_delete(node_t* node) {
+	if (node->leaf == TRUE) {
+		free(node);
+	} else {
+		for (int i = 0; i <= node->key_index; ++i) node_delete(node->child_array[i]);
+		free(node);
+	}
+}
+
+void btree_delete(btree_t* T) {
+	node_delete(T->root);
+	free(T);
 }
