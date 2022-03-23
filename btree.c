@@ -3,12 +3,15 @@
 #include <unistd.h>
 #include "btree.h"
 
-node_t* create_node() {
+node_t* create_node(BTREE_ERR *err) {
     
 	node_t* new_node = (node_t *) malloc(sizeof(node_t));
 
 	if(new_node == NULL){
-		printf("Out of memory");
+		fprintf(stderr, "Out of memory\n");
+		if (err != NULL)
+			*err = EMALLOC;
+		return;
 	}
 
 	for(int i = 0;i < NODE_KEYS; i++){
@@ -22,34 +25,38 @@ node_t* create_node() {
 	new_node->key_index = 0;
 	new_node->leaf = TRUE;
 
+	*err = ESUCCESS;
 	return new_node;
 }
 
-btree_t* create_btree() {
+btree_t* create_btree(BTREE_ERR *err) {
 
     btree_t* new_root = (btree_t *) malloc(sizeof(btree_t));
 
 	if(new_root == NULL){
-		return NULL;
+		fprintf(stderr, "Out of memory\n");
+		if (err != NULL)
+			*err = EMALLOC;
+		return;
 	}
 
-	node_t* head = create_node();
-
-	if(head == NULL){
-		return NULL;
-	}
+	node_t* head = create_node(err);
 
 	new_root->root = head;
 
+	*err = ESUCCESS;
 	return new_root;
 }
 
-result_t* get_resultset() {
+result_t* get_resultset(BTREE_ERR *err) {
 
     result_t *ret = (result_t*) malloc(sizeof(result_t));
 
 	if(ret == NULL){
-		printf("ERROR! Out of memory.");
+		fprintf(stderr, "Out of memory\n");
+		if (err != NULL)
+			*err = EMALLOC;
+		return;
 	}
 
 	ret->node_pointer = NULL;
@@ -57,10 +64,19 @@ result_t* get_resultset() {
 	ret->found = FALSE;
 	ret->depth = 0;
 
+	*err = ESUCCESS;
 	return ret;
 }
 
-void print_resultset(result_t* res) {
+void print_resultset(result_t* res, BTREE_ERR *err) {
+
+	if (res == NULL) {
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+
 	if (res->found == FALSE) {
 		printf("Key is not found in btree.\n\n");
 	} else {
@@ -69,10 +85,18 @@ void print_resultset(result_t* res) {
 		printf("Key is in node: %lx", (unsigned long int)res->node_pointer);
 		printf("\n\n");
 	}
+	*err = ESUCCESS;
 }
 
-void print_node(node_t* n) {
+void print_node(node_t* n, BTREE_ERR *err) {
     int i, q;
+
+	if(n == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}	
 
 	printf("  Index: %d\n", n->key_index);
 
@@ -96,11 +120,18 @@ void print_node(node_t* n) {
 			printf(" [%d : %lx]", q, (unsigned long int)n->child_array[q]);
 		}
 	}
-
+	*err = ESUCCESS;
 	printf("\n\n");
 }
 
-void search(int key, node_t *node) {
+void search(int key, node_t *node, BTREE_ERR *err) {
+
+	if(node == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
 
 	int i = 0;
 
@@ -109,26 +140,34 @@ void search(int key, node_t *node) {
 	}
 
 	if((i <= node->key_index) && (key == node->key_array[i])){
-		result_t *result = get_resultset();
+		result_t *result = get_resultset(err);
 		result->node_pointer = node;
 		result->key = key;
 		result->found = TRUE;
-		print_resultset(result);
+		print_resultset(result, err);
 		free(result);
 	} else if(node->leaf == TRUE){
-		result_t *result = get_resultset();
+		result_t *result = get_resultset(err);
 		result->node_pointer = node;
 		result->found = FALSE;
-		print_resultset(result);
+		print_resultset(result, err);
 		free(result);
 	} else {
-		search(key, node->child_array[i]);
+		search(key, node->child_array[i], err);
 	}
+	*err = ESUCCESS;
 }
 
-void split_child(node_t* parent_node, int i, node_t* child_array) { //It means i-th child in child_array of papent_node//
-	
-	node_t* new_node = create_node();
+void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err) { //It means i-th child in child_array of papent_node//
+
+	if ((i > 5) || (i < 0)) {
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return NULL;
+	}
+
+	node_t* new_node = create_node(err);
 	new_node->leaf = child_array->leaf;
 	new_node->key_index = NODE_ORDER-1;
 
@@ -156,10 +195,19 @@ void split_child(node_t* parent_node, int i, node_t* child_array) { //It means i
 	parent_node->key_array[i-1] = child_array->key_array[NODE_ORDER-1];
 
 	parent_node->key_index++;
+	*err = ESUCCESS;
 }
 
-void insert_nonfull(int key, node_t* n) {
-	   	int i = n->key_index;
+void insert_nonfull(int key, node_t* n, BTREE_ERR *err) {
+	   	
+		if(n == NULL){
+			fprintf(stderr, "Invalid argument\n");
+			if (err != NULL)
+				*err = EINVARG;
+			return;
+		}
+		   
+		int i = n->key_index;
 
 		if(n->leaf == TRUE){
 			while((i >= 1) && (key < n->key_array[i-1])){
@@ -173,33 +221,51 @@ void insert_nonfull(int key, node_t* n) {
 				i--;
 			}
 			if(n->child_array[i]->key_index == NODE_KEYS){
-				split_child(n, i+1, n->child_array[i]);
+				split_child(n, i+1, n->child_array[i], err);
 				if(key > n->key_array[i]){
 					i++;
 				}
 			}
-			insert_nonfull(key, n->child_array[i]);
+			insert_nonfull(key, n->child_array[i], err);
 	}
+	*err = ESUCCESS;
 }
 
 
-node_t* insert(int key, btree_t* b) {
+node_t* insert(int key, btree_t* b, BTREE_ERR *err) {
+	
+	if(b == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+	
 	node_t* root = b->root;
 	if(root->key_index == NODE_KEYS){
-		node_t* newNode = create_node();
+		node_t* newNode = create_node(err);
 		b->root = newNode;
 		newNode->leaf = FALSE;
 		newNode->key_index = 0;
 		newNode->child_array[0] = root;
-		split_child(newNode, 1, root);
-		insert_nonfull(key, newNode);
+		split_child(newNode, 1, root, err);
+		insert_nonfull(key, newNode, err);
 	} else {
-		insert_nonfull(key, b->root);
+		insert_nonfull(key, b->root, err);
 	}
+	*err = ESUCCESS;
 	return b->root;
 }
 
-void merge_children(node_t* root, int index, node_t* child1, node_t* child2) {
+void merge_children(node_t* root, int index, node_t* child1, node_t* child2, BTREE_ERR *err) {
+	
+	if((root == NULL) || (index < 0) || (child1 == NULL) || (child2 == NULL)){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return NULL;
+	}
+	
 	child1->key_index = NODE_KEYS;
 	int i;
 
@@ -208,19 +274,28 @@ void merge_children(node_t* root, int index, node_t* child1, node_t* child2) {
 	child1->key_array[NODE_ORDER-1] = root->key_array[index]; 
 	
 	if(child2->leaf == FALSE){
-		for(i=NODE_ORDER;i<NODE_POINTERS;i++)
+		for(i = NODE_ORDER;i < NODE_POINTERS;i++)
 			child1->child_array[i] = child2->child_array[i-NODE_ORDER];
 	}
 	
-	for(i=index+1;i<root->key_index;i++){
+	for(i = index+1;i < root->key_index;i++){
 		root->key_array[i-1] = root->key_array[i];
 		root->child_array[i] = root->child_array[i+1];
 	}
 	root->key_index--;
 	free(child2);
+	*err = ESUCCESS;
 }
 
-void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr) {
+void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr, BTREE_ERR *err) {
+	
+	if((root == NULL) || (leftPtr == NULL) || (index < 0) || (curPtr == NULL)){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+	
 	curPtr->key_index++;
 	int i;
 
@@ -235,9 +310,18 @@ void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPt
 	curPtr->child_array[0] = leftPtr->child_array[leftPtr->key_index];
 
 	leftPtr->key_index--;
+	*err = ESUCCESS;
 }
 
-void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* curPtr) {
+void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* curPtr, BTREE_ERR *err) {
+	
+	if((root == NULL) || (index < 0) || (rightPtr == NULL) || (curPtr == NULL)){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+	
 	curPtr->key_index++;
 	curPtr->key_array[curPtr->key_index-1] = root->key_array[index];
 	root->key_array[index] = rightPtr->key_array[0];
@@ -254,25 +338,51 @@ void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* cur
 	}
 
 	rightPtr->key_index--;
+	*err = ESUCCESS;
 }
 
-int BTreeGetLeftMax(node_t* T){
+int BTreeGetLeftMax(node_t* T, BTREE_ERR *err){
+
+	if(T == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+
 	if(T->leaf == FALSE){
-		return BTreeGetLeftMax(T->child_array[T->key_index]);
+		return BTreeGetLeftMax(T->child_array[T->key_index], err);
 	}else{
 		return T->key_array[T->key_index-1];
 	}
+	*err = ESUCCESS;
 }
 
-int BTreeGetRightMin(node_t* T){
+int BTreeGetRightMin(node_t* T, BTREE_ERR *err){
+	
+	if(T == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+	
 	if(T->leaf == FALSE){
-		return BTreeGetRightMin(T->child_array[0]);
+		return BTreeGetRightMin(T->child_array[0], err);
 	}else{
 		return T->key_array[0];
 	}
+	*err = ESUCCESS;
 }
 
-void BTreeDeleteNoNone(int X, node_t* root) {
+void BTreeDeleteNoNone(int X, node_t* root, BTREE_ERR *err) {
+
+	if(root == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
 
 	int i;
 	
@@ -288,7 +398,9 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 				root->key_array[i] = root->key_array[i+1];
 			root->key_index--;
 		} else {
-			printf("Key is not found.\n\n");
+			fprintf(stderr, "Key is not in BTree\n\n");
+			if (err != NULL)
+				*err = EEMPTY;
 			return;
 		}
 	} else {  
@@ -302,17 +414,17 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 			nexPtr = root->child_array[i+1];
 			
 			if(prePtr->key_index > NODE_ORDER-1){
-				int aPrecursor = BTreeGetLeftMax(prePtr);
+				int aPrecursor = BTreeGetLeftMax(prePtr, err);
 				root->key_array[i] = aPrecursor;
 			
-				BTreeDeleteNoNone(aPrecursor,prePtr);
+				BTreeDeleteNoNone(aPrecursor,prePtr, err);
 			} else if(nexPtr->key_index > NODE_ORDER-1){
-				int aSuccessor = BTreeGetRightMin(nexPtr);
+				int aSuccessor = BTreeGetRightMin(nexPtr, err);
 				root->key_array[i] = aSuccessor;
-				BTreeDeleteNoNone(aSuccessor,nexPtr);
+				BTreeDeleteNoNone(aSuccessor,nexPtr, err);
 			} else {
-				merge_children(root,i,prePtr,nexPtr);
-				BTreeDeleteNoNone(X,prePtr);
+				merge_children(root,i,prePtr,nexPtr, err);
+				BTreeDeleteNoNone(X,prePtr, err);
 			}
 		} else {
 			prePtr = root->child_array[i];
@@ -323,44 +435,72 @@ void BTreeDeleteNoNone(int X, node_t* root) {
 				preprePtr = root->child_array[i-1];
 			if(NODE_ORDER-1 == prePtr->key_index) {
 				if( (preprePtr != NULL) && (preprePtr->key_index > NODE_ORDER-1))
-					BTreeBorrowFromLeft(root,i-1,preprePtr,prePtr);
+					BTreeBorrowFromLeft(root,i-1,preprePtr,prePtr, err);
 				else if( (nexPtr != NULL) && (nexPtr->key_index > NODE_ORDER-1))
-					BTreeBorrowFromRight(root,i,nexPtr,prePtr);
+					BTreeBorrowFromRight(root,i,nexPtr,prePtr, err);
 				else if(preprePtr != NULL){
-					merge_children(root,i-1,preprePtr,prePtr);
+					merge_children(root,i-1,preprePtr,prePtr, err);
 					prePtr = preprePtr;
 				} else
-					merge_children(root,i,prePtr,nexPtr);
+					merge_children(root,i,prePtr,nexPtr, err);
 			}
-			BTreeDeleteNoNone(X,prePtr);
+			BTreeDeleteNoNone(X, prePtr, err);
 		}
 	}
+	*err = ESUCCESS;
 }
 
-node_t* delete(int key, btree_t* b) {
+node_t* delete(int key, btree_t* b, BTREE_ERR *err) {
+	
+	if(b == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+	
 	if(b->root->key_index == 1){
 		node_t* child1 = b->root->child_array[0];
 		node_t* child2 = b->root->child_array[1];
 		if((child1 != NULL) && (child2 != NULL)){
 			if((NODE_ORDER-1 == child1->key_index) && (NODE_ORDER-1 == child2->key_index)){
-				merge_children(b->root, 0, child1, child2);
+				merge_children(b->root, 0, child1, child2, err);
 				free(b->root);
-				BTreeDeleteNoNone(key, child1);
+				BTreeDeleteNoNone(key, child1, err);
 				return child1;
 			}
 		}
 	}
-	BTreeDeleteNoNone(key, b->root);
+	BTreeDeleteNoNone(key, b->root, err);
+	*err = ESUCCESS;
 	return b->root;
 }
 
-void node_delete(node_t* node) {
+void node_delete(node_t* node, BTREE_ERR *err) {
+
+	if(node == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+	
 	if (node->leaf == TRUE) {
 		free(node);
 	}
+	*err = ESUCCESS;
 }
 
-void btree_delete(btree_t* T) {
-	node_delete(T->root);
+void btree_delete(btree_t* T, BTREE_ERR *err) {
+
+	if(T == NULL){
+		fprintf(stderr, "Invalid argument\n");
+		if (err != NULL)
+			*err = EINVARG;
+		return;
+	}
+
+	node_delete(T->root, err);
 	free(T);
+	*err = ESUCCESS;
 }

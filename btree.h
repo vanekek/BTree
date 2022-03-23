@@ -5,8 +5,8 @@
 typedef enum{
 	ESUCCESS = 0,
 	EINVARG,
-	EFULL,
-	EEMPTY
+	EEMPTY,
+	EMALLOC
 } BTREE_ERR;
 
 typedef enum {
@@ -32,30 +32,30 @@ typedef struct {
 	unsigned int depth;
 } result_t;
 
-node_t* create_node();
-btree_t* create_btree();
+node_t* create_node(BTREE_ERR *err);
+btree_t* create_btree(BTREE_ERR *err);
 
-result_t* get_resultset();
-void print_resultset(result_t* res);
-void search(int key, node_t *node);
+result_t* get_resultset(BTREE_ERR *err);
+void print_resultset(result_t* res, BTREE_ERR *err);
+void search(int key, node_t *node, BTREE_ERR *err);
 
-void print_node(node_t* n);
+void print_node(node_t* n, BTREE_ERR *err);
 
-void split_child(node_t* parent_node, int i, node_t* child_array);
-void insert_nonfull(int key, node_t* n);
-node_t* insert(int key, btree_t* node);
+void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err);
+void insert_nonfull(int key, node_t* n, BTREE_ERR *err);
+node_t* insert(int key, btree_t* node, BTREE_ERR *err);
 
-void merge_children(node_t* root, int index, node_t* child1, node_t* child2);
-void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr);
-void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* curPtr);
-void BTreeDeleteNoNone(int X, node_t* root);
-node_t* delete(int key, btree_t* tree);
+void merge_children(node_t* root, int index, node_t* child1, node_t* child2, BTREE_ERR *err);
+void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr, BTREE_ERR *err);
+void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* curPtr, BTREE_ERR *err);
+void BTreeDeleteNoNone(int X, node_t* root, BTREE_ERR *err);
+node_t* delete(int key, btree_t* tree, BTREE_ERR *err);
 
-int BTreeGetLeftMax(node_t *T);
-int BTreeGetRightMin(node_t *T);
+int BTreeGetLeftMax(node_t *T, BTREE_ERR *err);
+int BTreeGetRightMin(node_t *T, BTREE_ERR *err);
 
-void node_delete(node_t* node);
-void btree_delete(btree_t* T);
+void node_delete(node_t* node, BTREE_ERR *err);
+void btree_delete(btree_t* T, BTREE_ERR *err);
 
 
 
