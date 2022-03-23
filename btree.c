@@ -108,10 +108,6 @@ void search(int key, node_t *node) {
 		i++;
 	}
 
-	if(i == 6){
-		i--;
-	}
-
 	if((i <= node->key_index) && (key == node->key_array[i])){
 		result_t *result = get_resultset();
 		result->node_pointer = node;
@@ -360,9 +356,6 @@ node_t* delete(int key, btree_t* b) {
 
 void node_delete(node_t* node) {
 	if (node->leaf == TRUE) {
-		free(node);
-	} else {
-		for (int i = 0; i <= node->key_index; ++i) node_delete(node->child_array[i]);
 		free(node);
 	}
 }
