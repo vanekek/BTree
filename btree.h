@@ -2,7 +2,7 @@
 #define NODE_POINTERS	(NODE_ORDER*2)
 #define NODE_KEYS		NODE_POINTERS - 1 
 
-typedef enum{
+typedef enum {
 	ESUCCESS = 0,
 	EINVARG,
 	EEMPTY,
