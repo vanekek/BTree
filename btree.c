@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "btree.h"
-
+//Function allocates node, sets default values for properties//
 node_t* create_node(BTREE_ERR *err) {
     
 	node_t* new_node = (node_t *) malloc(sizeof(node_t));
@@ -28,7 +28,7 @@ node_t* create_node(BTREE_ERR *err) {
 	*err = ESUCCESS;
 	return new_node;
 }
-
+//Allocating a btree//
 btree_t* create_btree(BTREE_ERR *err) {
 
     btree_t* new_root = (btree_t *) malloc(sizeof(btree_t));
@@ -47,7 +47,7 @@ btree_t* create_btree(BTREE_ERR *err) {
 	*err = ESUCCESS;
 	return new_root;
 }
-
+//Allocating a result-set//
 result_t* get_resultset(BTREE_ERR *err) {
 
     result_t *ret = (result_t*) malloc(sizeof(result_t));
@@ -67,7 +67,7 @@ result_t* get_resultset(BTREE_ERR *err) {
 	*err = ESUCCESS;
 	return ret;
 }
-
+//printing result-set//
 void print_resultset(result_t* res, BTREE_ERR *err) {
 
 	if (res == NULL) {
@@ -87,7 +87,7 @@ void print_resultset(result_t* res, BTREE_ERR *err) {
 	}
 	*err = ESUCCESS;
 }
-
+//printing of node function//
 void print_node(node_t* n, BTREE_ERR *err) {
     int i, q;
 
@@ -123,7 +123,10 @@ void print_node(node_t* n, BTREE_ERR *err) {
 	*err = ESUCCESS;
 	printf("\n\n");
 }
-
+/* Search operation searches key X in btree T. Recursively traverse the tree
+** from top to bottom. At each level Search choose the maximum key whose
+** value is greater than or equal to the X. If equal to X, found.
+** Otherwise continue to traverse. */
 void search(int key, node_t *node, BTREE_ERR *err) {
 
 	if (node == NULL) {
@@ -157,7 +160,8 @@ void search(int key, node_t *node, BTREE_ERR *err) {
 	}
 	*err = ESUCCESS;
 }
-
+/* split_child function moves the median key of node child_array into
+** its parent ptrParent, where child_array is the ith child of ptrParent.*/
 void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err) { //It means i-th child in child_array of papent_node//
 
 	if ((i > 5) || (i < 0)) {
@@ -197,7 +201,8 @@ void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err
 	parent_node->key_index++;
 	*err = ESUCCESS;
 }
-
+/* insert_nonfull function inserts X into a non-full node T. It means that
+** it is guaranteed that T is not a full node.*/
 void insert_nonfull(int key, node_t* n, BTREE_ERR *err) {
 	   	
 		if (n == NULL) {
@@ -230,8 +235,10 @@ void insert_nonfull(int key, node_t* n, BTREE_ERR *err) {
 	}
 	*err = ESUCCESS;
 }
-
-
+/* The BTreeInsert operation insert key into T.Before insert ,this operation
+** check whether T's root node is full(root->key_index == 2*d -1) or not.If full,
+** execute split_child to guarantee the parent never become full.And then
+** execute BTreeInsertNonFull to insert X into a non-full node.*/
 node_t* insert(int key, btree_t* b, BTREE_ERR *err) {
 	
 	if (b == NULL) {
@@ -256,7 +263,8 @@ node_t* insert(int key, btree_t* b, BTREE_ERR *err) {
 	*err = ESUCCESS;
 	return b->root;
 }
-
+/* merge_children function merges the root->K[index] and it's two children
+** and then set child1 to the new root.*/
 void merge_children(node_t* root, int index, node_t* child1, node_t* child2, BTREE_ERR *err) {
 	
 	if ((root == NULL) || (index < 0) || (child1 == NULL) || (child2 == NULL)) {
@@ -286,7 +294,9 @@ void merge_children(node_t* root, int index, node_t* child1, node_t* child2, BTR
 	free(child2);
 	*err = ESUCCESS;
 }
-
+/* BTreeBorrowFromLeft function borrows a key from leftPtr, curPtr borrows
+** a node from leftPtr, root->K[index] shifts down to curPtr, leftPtr's
+** is shifting right-max key up to root->K[index].*/
 void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr, BTREE_ERR *err) {
 	
 	if ((root == NULL) || (leftPtr == NULL) || (index < 0) || (curPtr == NULL)) {
@@ -314,7 +324,9 @@ void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPt
 	leftPtr->key_index--;
 	*err = ESUCCESS;
 }
-
+/* BTreeBorrowFromLeft function borrows a key from rightPtr, curPtr borrows
+** a node from rightPtr, root->K[index] shifts down to curPtr, shifts RightPtr's
+** left-min key up to root->K[index].*/
 void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* curPtr, BTREE_ERR *err) {
 	
 	if ((root == NULL) || (index < 0) || (rightPtr == NULL) || (curPtr == NULL)) {
@@ -342,7 +354,7 @@ void BTreeBorrowFromRight(node_t* root, int index, node_t* rightPtr, node_t* cur
 	rightPtr->key_index--;
 	*err = ESUCCESS;
 }
-
+//Get T's left-max key//
 int BTreeGetLeftMax(node_t* T, BTREE_ERR *err) {
 
 	if (T == NULL) {
@@ -359,7 +371,7 @@ int BTreeGetLeftMax(node_t* T, BTREE_ERR *err) {
 	}
 	*err = ESUCCESS;
 }
-
+//Get T's right-min key//
 int BTreeGetRightMin(node_t* T, BTREE_ERR *err){
 	
 	if (T == NULL) {
@@ -376,9 +388,26 @@ int BTreeGetRightMin(node_t* T, BTREE_ERR *err){
 	}
 	*err = ESUCCESS;
 }
-
+/* BTreeDeleteNoNone function recursively deletes X in root, handles both leaf
+** and internal node:
+**   1) If X is in leaf node, delete it.
+**   2) If X is in internal node P:
+**      1): If P's left neighbor -- prePtr -- has at least d keys, then replace X with
+**      	prePtr's right-max key and then recursively delete it.
+**      2): If P's right neighbor -- nexPtr -- has at least d keys, replace X with
+**      	nexPtr's left-min key and then recursively delete it.
+**      3): If both of prePtr and nexPtr have d-1 keys, merge X and nexPtr into
+**      	prePtr, prePtr have 2*d-1 keys, and then recursively delete X in
+**      	prePtr.
+**   3) If X is not in internal node P, X must in P->child_array[i] keys. If child_array[i]
+**      only has d-1 keys:
+**      1): If child_array[i]'s neighbor have at least d keys, borrow a key from
+**      	child_array[i]'s neighbor.
+**      2): If both of child_array[i]'s left and right neighbor have d-1 keys, merge
+**      	child_array[i] with one of its neighbor.
+**   	In both situations recursively delete X.*/
 void BTreeDeleteNoNone(int X, node_t* root, BTREE_ERR *err) {
-
+	
 	if (root == NULL) {
 		fprintf(stderr, "Invalid argument\n");
 		if (err != NULL)
@@ -387,7 +416,7 @@ void BTreeDeleteNoNone(int X, node_t* root, BTREE_ERR *err) {
 	}
 
 	int i;
-	
+	//If root is a leaf node//
 	if (root->leaf == TRUE) {
 		i=0;
 
@@ -405,7 +434,7 @@ void BTreeDeleteNoNone(int X, node_t* root, BTREE_ERR *err) {
 				*err = EEMPTY;
 			return;
 		}
-	} else {  
+	} else {  //X is in internal node//
 		i = 0;
 		node_t* prePtr = NULL;
 		node_t* nexPtr = NULL;
@@ -450,7 +479,9 @@ void BTreeDeleteNoNone(int X, node_t* root, BTREE_ERR *err) {
 	}
 	*err = ESUCCESS;
 }
-
+/* delete operation deletes X from btree b up-to-down and no-backtrack.
+** Before deleting, checks if it's necessary to merge the root and its children
+** to reduce the tree's height. Executes BTreeDeleteNoNone to recursively delete*/
 node_t* delete(int key, btree_t* b, BTREE_ERR *err) {
 	
 	if (b == NULL) {
@@ -459,7 +490,8 @@ node_t* delete(int key, btree_t* b, BTREE_ERR *err) {
 			*err = EINVARG;
 		return;
 	}
-	
+	//if the root of T only have 1 key and both of T's two child have d-1//
+	//keys, then merge the children and the root. Guarantees not need to backtrack.//
 	if (b->root->key_index == 1) {
 		node_t* child1 = b->root->child_array[0];
 		node_t* child2 = b->root->child_array[1];
@@ -476,7 +508,7 @@ node_t* delete(int key, btree_t* b, BTREE_ERR *err) {
 	*err = ESUCCESS;
 	return b->root;
 }
-
+//free memory//
 void node_delete(node_t* node, BTREE_ERR *err) {
 
 	if (node == NULL) {
@@ -491,7 +523,7 @@ void node_delete(node_t* node, BTREE_ERR *err) {
 	}
 	*err = ESUCCESS;
 }
-
+//free memory//
 void btree_delete(btree_t* T, BTREE_ERR *err) {
 
 	if (T == NULL) {
