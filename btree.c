@@ -3,9 +3,9 @@
 #include <unistd.h>
 #include "btree.h"
 //Function allocates node, sets default values for properties//
-node_t* create_node(BTREE_ERR *err) {
+Node *create_node(BTREE_ERR *err) {
     
-	node_t* new_node = (node_t *) malloc(sizeof(node_t));
+	Node *new_node = (Node *) malloc(sizeof(Node));
 
 	if (new_node == NULL) {
 		fprintf(stderr, "Out of memory\n");
@@ -14,24 +14,24 @@ node_t* create_node(BTREE_ERR *err) {
 		return;
 	}
 
-	for (int i = 0;i < NODE_KEYS; i++) {
-		new_node->key_array[i] = 0;
+	for (int i = 0; i < NODE_KEYS; i++) {
+		new_node->keys[i] = 0;
 	}
 
 	for (int i = 0;i < NODE_POINTERS; i++) {
-		new_node->child_array[i] = NULL;
+		new_node->child[i] = NULL;
 	}
 
-	new_node->key_index = 0;
+	new_node->current_size = 0;
 	new_node->leaf = TRUE;
 
 	*err = ESUCCESS;
 	return new_node;
 }
 //Allocating a btree//
-btree_t* create_btree(BTREE_ERR *err) {
+BTree *create_btree(BTREE_ERR *err) {
 
-    btree_t* new_root = (btree_t *) malloc(sizeof(btree_t));
+    BTree *new_root = (BTree *) malloc(sizeof(BTree));
 
 	if (new_root == NULL) {
 		fprintf(stderr, "Out of memory\n");
@@ -40,55 +40,15 @@ btree_t* create_btree(BTREE_ERR *err) {
 		return;
 	}
 
-	node_t* head = create_node(err);
+	Node *head = create_node(err);
 
 	new_root->root = head;
 
 	*err = ESUCCESS;
 	return new_root;
 }
-//Allocating a result-set//
-result_t* get_resultset(BTREE_ERR *err) {
-
-    result_t *ret = (result_t*) malloc(sizeof(result_t));
-
-	if (ret == NULL) {
-		fprintf(stderr, "Out of memory\n");
-		if (err != NULL)
-			*err = EMALLOC;
-		return;
-	}
-
-	ret->node_pointer = NULL;
-	ret->key = 0;
-	ret->found = FALSE;
-	ret->depth = 0;
-
-	*err = ESUCCESS;
-	return ret;
-}
-//printing result-set//
-void print_resultset(result_t* res, BTREE_ERR *err) {
-
-	if (res == NULL) {
-		fprintf(stderr, "Invalid argument\n");
-		if (err != NULL)
-			*err = EINVARG;
-		return;
-	}
-
-	if (res->found == FALSE) {
-		printf("Key is not found in btree.\n\n");
-	} else {
-		printf("Key %d has succesfully found in btree !\n", res->key);
-		printf("Depth: %d\n", res->depth);
-		printf("Key is in node: %lx", (unsigned long int)res->node_pointer);
-		printf("\n\n");
-	}
-	*err = ESUCCESS;
-}
 //printing of node function//
-void print_node(node_t* n, BTREE_ERR *err) {
+void print_node(Node *n, BTREE_ERR *err) {
     int i, q;
 
 	if (n == NULL) {
@@ -98,7 +58,7 @@ void print_node(node_t* n, BTREE_ERR *err) {
 		return;
 	}	
 
-	printf("  Index: %d\n", n->key_index);
+	printf("  Index: %d\n", n->current_size);
 
 	printf("   Leaf: ");
 	if (n->leaf) {
@@ -108,8 +68,8 @@ void print_node(node_t* n, BTREE_ERR *err) {
 	}
 
 	printf("  Array:");
-	for (i = 0; i < n->key_index; i++) {
-		printf(" [%d : %d]", i, n->key_array[i]);
+	for (i = 0; i < n->current_size; i++) {
+		printf(" [%d : %d]", i, n->keys[i]);
 	}
 
 	printf("\n  Childs:");
@@ -117,7 +77,7 @@ void print_node(node_t* n, BTREE_ERR *err) {
 		printf(" NONE");
 	} else {
 		for (q = 0; q < NODE_POINTERS; q++) {
-			printf(" [%d : %lx]", q, (unsigned long int)n->child_array[q]);
+			printf(" [%d : %lx]", q, (unsigned long int)n->child[q]);
 		}
 	}
 	*err = ESUCCESS;
@@ -127,7 +87,7 @@ void print_node(node_t* n, BTREE_ERR *err) {
 ** from top to bottom. At each level Search choose the maximum key whose
 ** value is greater than or equal to the X. If equal to X, found.
 ** Otherwise continue to traverse. */
-void search(int key, node_t *node, BTREE_ERR *err) {
+void search_in_node(int key, Node *node, BTREE_ERR *err) {
 
 	if (node == NULL) {
 		fprintf(stderr, "Invalid argument\n");
@@ -138,31 +98,43 @@ void search(int key, node_t *node, BTREE_ERR *err) {
 
 	int i = 0;
 
-	while ((i < node->key_index) && (key > node->key_array[i])) {
+	while ((i < node->current_size) && (key > node->keys[i])) {
 		i++;
 	}
 
-	if ((i <= node->key_index) && (key == node->key_array[i])) {
-		result_t *result = get_resultset(err);
-		result->node_pointer = node;
-		result->key = key;
-		result->found = TRUE;
-		print_resultset(result, err);
-		free(result);
+	if ((i <= node->current_size) && (key == node->keys[i])) {
+		printf("Key %d is found in Node:\n", key);
+		printf("[ ");
+		for (int k = 0; k < node->current_size; ++k) {
+			printf("%d ", node->keys[k]);
+		}
+		printf("]");
 	} else if (node->leaf == TRUE) {
-		result_t *result = get_resultset(err);
-		result->node_pointer = node;
-		result->found = FALSE;
-		print_resultset(result, err);
-		free(result);
+		printf("Key %d wasn't found");
 	} else {
-		search(key, node->child_array[i], err);
+		search_in_node(key, node->child[i], err);
 	}
 	*err = ESUCCESS;
 }
-/* split_child function moves the median key of node child_array into
-** its parent ptrParent, where child_array is the ith child of ptrParent.*/
-void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err) { //It means i-th child in child_array of papent_node//
+//Search the key function for tree now//
+void search(int key, BTree *tree, BTREE_ERR *err) {
+	search_in_node(key, tree->root, err);
+}
+/* Inserts key into node.*/
+void insert_node(Node *node, int key, BTREE_ERR *err) {
+	int index;
+
+	for (index = node->current_size; (index > 0) && (key < node->keys[index - 1]); --index) {
+		node->keys[index] = node->keys[index - 1];
+		node->child[index + 1] = node->child[index];
+	}
+
+	node->keys[index] = key;
+	node->child[index + 1] = node->child[index];
+	node->current_size += 1;
+}
+/* split_child function is splitting node, that is full (too many children to work further with it)*/
+void split_child(Node *parent, int i, BTREE_ERR *err) {
 
 	if ((i > 5) || (i < 0)) {
 		fprintf(stderr, "Invalid argument\n");
@@ -171,97 +143,62 @@ void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err
 		return NULL;
 	}
 
-	node_t* new_node = create_node(err);
-	new_node->leaf = child_array->leaf;
-	new_node->key_index = NODE_ORDER-1;
+	Node *splitted_node = parent->child[i];
+	Node *new_node = create_node(err);
+	new_node->leaf = splitted_node->leaf;
+	new_node->current_size = NODE_ORDER - 1;
 
-	for (int j = 0;j < NODE_ORDER-1;j++) {
-		new_node->key_array[j] = child_array->key_array[NODE_ORDER+j];
+	for (int k = 0; k < NODE_ORDER - 1; ++k) {
+		new_node->keys[k] = splitted_node->keys[k + NODE_ORDER];
 	}
-
-	if (child_array->leaf == 0) {
-		for (int j = 0;j < NODE_ORDER;j++) {
-			new_node->child_array[j] = child_array->child_array[NODE_ORDER+j];
+	if (splitted_node->leaf == FALSE) {
+		for (int j = 0; j < NODE_ORDER; ++j) {
+			new_node->child[j] = splitted_node->child[j+NODE_ORDER];
 		}
 	}
-	child_array->key_index = NODE_ORDER-1;
+	splitted_node->current_size = NODE_ORDER - 1;
 
-	for (int j = parent_node->key_index;j >= i;j--) {
-		parent_node->child_array[j+1] = parent_node->child_array[j];
-	}
-
-	parent_node->child_array[i] = new_node;
-
-	for (int j = parent_node->key_index; j >= i; j--) {
-		parent_node->key_array[j] = parent_node->key_array[j-1];
-	}
-
-	parent_node->key_array[i-1] = child_array->key_array[NODE_ORDER-1];
-
-	parent_node->key_index++;
-	*err = ESUCCESS;
+	insert_node(parent, splitted_node->keys[NODE_ORDER - 1], err); //we are lifting median key to parent//
+	parent->child[i + 1] = new_node;
 }
-/* insert_nonfull function inserts X into a non-full node T. It means that
-** it is guaranteed that T is not a full node.*/
-void insert_nonfull(int key, node_t* n, BTREE_ERR *err) {
-	   	
-		if (n == NULL) {
-			fprintf(stderr, "Invalid argument\n");
-			if (err != NULL)
-				*err = EINVARG;
-			return;
-		}
-		   
-		int i = n->key_index;
-
-		if (n->leaf == TRUE) {
-			while ((i >= 1) && (key < n->key_array[i-1])) {
-				n->key_array[i] = n->key_array[i-1];
-				i--;
-			}
-			n->key_array[i] = key;
-			n->key_index++;
-		} else {
-			while ((i >= 1) && (key < n->key_array[i-1])) {
-				i--;
-			}
-			if (n->child_array[i]->key_index == NODE_KEYS) {
-				split_child(n, i+1, n->child_array[i], err);
-				if (key > n->key_array[i]) {
-					i++;
-				}
-			}
-			insert_nonfull(key, n->child_array[i], err);
-	}
-	*err = ESUCCESS;
-}
-/* The BTreeInsert operation insert key into T.Before insert ,this operation
-** check whether T's root node is full(root->key_index == 2*d -1) or not.If full,
-** execute split_child to guarantee the parent never become full.And then
-** execute BTreeInsertNonFull to insert X into a non-full node.*/
-node_t* insert(int key, btree_t* b, BTREE_ERR *err) {
+/* Insert function inserts key into tree*/
+void insert(int key, BTree *tree, BTREE_ERR *err) {
 	
-	if (b == NULL) {
+	if (tree == NULL) {
 		fprintf(stderr, "Invalid argument\n");
 		if (err != NULL)
 			*err = EINVARG;
 		return;
 	}
 	
-	node_t* root = b->root;
-	if (root->key_index == NODE_KEYS) {
-		node_t* newNode = create_node(err);
-		b->root = newNode;
-		newNode->leaf = FALSE;
-		newNode->key_index = 0;
-		newNode->child_array[0] = root;
-		split_child(newNode, 1, root, err);
-		insert_nonfull(key, newNode, err);
-	} else {
-		insert_nonfull(key, b->root, err);
+	if (tree->root->current_size == NODE_KEYS) {
+		Node *new_root = create_node(err);
+		new_root->leaf = FALSE;
+		new_root->child[0] = tree->root;
+		tree->root = new_root;
+		split_child(new_root, 0, err);
 	}
-	*err = ESUCCESS;
-	return b->root;
+
+	Node *current_node = tree->root;
+	while(current_node->leaf == FALSE) {
+
+		int index = current_node->current_size - 1;
+		while ((index >= 0) && (key <= current_node->keys[index])) {
+			index -= 1;
+		}
+		index += 1;
+
+		if (current_node->child[index]->current_size == NODE_KEYS) {
+			split_child(current_node, index, err);
+			if (current_node->keys[index] < key) {
+				index += 1;
+			}
+		}
+
+		current_node = current_node->child[index];
+	}
+
+	insert_node(current_node, key, err);
 }
 /* merge_children function merges the root->K[index] and it's two children
 ** and then set child1 to the new root.*/

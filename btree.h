@@ -8,42 +8,34 @@ typedef enum {
 	EEMPTY,
 	EMALLOC
 } BTREE_ERR;
-//enum for define bool//
+//enum for define bool type//
 typedef enum {
     FALSE = 0,
     TRUE = 1
 } boolean;
 // node of btree//
-typedef struct node {
-	int key_array[NODE_KEYS];
-	struct node *child_array[NODE_POINTERS];
-	unsigned int key_index;
+typedef struct Node {
+	int keys[NODE_KEYS];
+	struct Node *child[NODE_POINTERS];
+	unsigned int current_size;
 	boolean leaf;
-} node_t;
+} Node;
 //btree//
 typedef struct {
-	node_t *root;
-} btree_t;
-//struct for the result of search function and effective printing//
-typedef struct {
-	node_t *node_pointer;
-	int key;
-	boolean found;
-	unsigned int depth;
-} result_t;
+	Node *root;
+} BTree;
 //creating functions//
-node_t* create_node(BTREE_ERR *err);
-btree_t* create_btree(BTREE_ERR *err);
+node* create_node(BTREE_ERR *err);
+BTree* create_btree(BTREE_ERR *err);
 //search functions//
-result_t* get_resultset(BTREE_ERR *err);
-void print_resultset(result_t* res, BTREE_ERR *err);
-void search(int key, node_t *node, BTREE_ERR *err);
+void search_in_node(int key, Node *node, BTREE_ERR *err);
+void search(int key, BTree *tree, BTREE_ERR *err)
 //print of node function//
-void print_node(node_t* n, BTREE_ERR *err);
+void print_node(Node *n, BTREE_ERR *err);
 //insert functions//
-void split_child(node_t* parent_node, int i, node_t* child_array, BTREE_ERR *err);
-void insert_nonfull(int key, node_t* n, BTREE_ERR *err);
-node_t* insert(int key, btree_t* node, BTREE_ERR *err);
+void split_child(Node *parent_node, int i, Node *child_array, BTREE_ERR *err);
+void insert_node(Node *node, int key, BTREE_ERR *err);
+void insert(int key, BTree *tree, BTREE_ERR *err);
 //functions for deleting keys//
 void merge_children(node_t* root, int index, node_t* child1, node_t* child2, BTREE_ERR *err);
 void BTreeBorrowFromLeft(node_t* root, int index, node_t* leftPtr, node_t* curPtr, BTREE_ERR *err);

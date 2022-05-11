@@ -5,13 +5,11 @@
 int main() {
     BTREE_ERR err;
 
-    btree_t* B = NULL;
-    node_t* k = NULL;
-    node_t* kk = NULL;
-    node_t* f = NULL;
-    result_t* ress = NULL;
+    BTree *B = NULL;
+    Node *k = NULL;   
+    Node *kk = NULL;
+    Node *f = NULL;
     //Tests for invalid arguments//
-    print_resultset(ress, &err);
     if (err != EINVARG) 
         fprintf(stdout, "Test_1\t->\tFAILED\n");
     else
@@ -101,7 +99,7 @@ int main() {
     else
         fprintf(stdout, "Test_15\t->\tPASSED\n");
 
-    btree_t* T = create_btree(&err);
+    BTree *T = create_btree(&err);
     if (err != EMALLOC) 
         fprintf(stdout, "Test_16\t->\tFAILED\n");
     else
@@ -134,9 +132,9 @@ int main() {
     else
         fprintf(stdout, "Test_144\t->\tPASSED\n");
     //Test for node printing//
-    node_t* node = T->root;
+    Node *node = T->root;
     node = T->root;
-    while (node->leaf != TRUE) node = node->child_array[0];
+    while (node->leaf != TRUE) node = node->child[0];
     print_node(node, &err);
     if (err != ESUCCESS) 
         fprintf(stdout, "Test_145\t->\tFAILED\n");
