@@ -39,6 +39,8 @@ BTree *create_btree(BTREE_ERR *err) {
 
 	Node *head = create_node(err);
 
+	Node *old = new_root->root;
+
 	new_root->root = head;
 
 	*err = ESUCCESS;
@@ -327,7 +329,7 @@ void delete(BTree *tree, int key, BTREE_ERR *err) {
 					continue;
 				}
 			}
-			printf("Key %d was successfully deleted !", res);
+			printf("Key %d was successfully deleted !\n", res);
 			return;
 		} else {
 			if (current->leaf == TRUE) {
@@ -380,5 +382,6 @@ void btree_delete(BTree *T, BTREE_ERR *err) {
 	}
 
 	node_delete(T->root, err);
+	free(T);
 	*err = ESUCCESS;
 }

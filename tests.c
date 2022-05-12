@@ -47,18 +47,34 @@ int main() {
         fprintf(stdout, "Test_15\t->\tFAILED\n");
     else
         fprintf(stdout, "Test_15\t->\tPASSED\n");
-
+    search_in_node(1, k, &err);
+    if (err != EINVARG) 
+        fprintf(stdout, "Test_15\t->\tFAILED\n");
+    else
+        fprintf(stdout, "Test_15\t->\tPASSED\n");
+    split_child(k, 9, &err);
+    if (err != EINVARG) 
+        fprintf(stdout, "Test_15\t->\tFAILED\n");
+    else
+        fprintf(stdout, "Test_15\t->\tPASSED\n");
+    //Tests with data//
     BTree *T = create_btree(&err);
     if (err != EMALLOC) 
         fprintf(stdout, "Test_16\t->\tFAILED\n");
     else
         fprintf(stdout, "Test_16\t->\tPASSED\n");
-    //Tests with dataset//
-    int array[] = {1, -11, 12, 81, 82, 83, 88, -29, -374, -84, 99, 13, -23, 18, 19, 20, -372, 25, 28, 29, 31,
-				 35, 36, 39, 41, 73, 74,
-				 76, 80, 83, 98, 42, 45, -234, -24, 55, 58, 59, 61, 67, 71, -3, -38, -82, -49, -72,
-				-35, -9, -24 , -92, 89, -83, 15, 16, 17, -84, -27, -22, -75691, 93, 94, 95};
 
+    BTree *tree = create_btree(&err);
+    Node *left = create_node(&err);
+    Node *right = create_node(&err);
+
+    
+    //Tests with dataset//
+    int array[] = {1, -11, 12, 13, 15, 16, 17, 18, 19, 20, 25, 28, 29, 31,
+				35, 36, 39, 41, 42, 45, 55, 58, 59, 61, 67, 71, 73, 74,
+				76, 80, 81, 82, 83, 88, 89, 99, 83, 91, 93, 94, 95, 98,
+                -23, -234, -24, -3, -38, -82, -49, -72, -84, -27, -22,
+				35, -9, -29, -374, -84, -24 , -92, -83, -372, -756, 10987};
     for(int i = 0; i < 63; ++i) {
       insert(array[i], T, &err);
       if (err != ESUCCESS) 
@@ -102,7 +118,7 @@ int main() {
         fprintf(stdout, "Test_148\t->\tFAILED\n");
     else
         fprintf(stdout, "Test_149\t->\tPASSED\n");
-    delete(T, 98, &err);
+    delete(T, 73, &err);
     if (err != ESUCCESS) 
         fprintf(stdout, "Test_150\t->\tFAILED\n");
     else
@@ -117,6 +133,12 @@ int main() {
         fprintf(stdout, "Test_154\t->\tFAILED\n");
     else
         fprintf(stdout, "Test_155\t->\tPASSED\n");
+    for (int i = -100; i < 0; ++i) {
+        delete(T, i, &err);
+    }
+    for (int i = 100; i > 0; --i) {
+        delete(T, i, &err);
+    }
     search(15, T, &err);
     if (err != ESUCCESS) 
         fprintf(stdout, "Test_209\t->\tFAILED\n");
