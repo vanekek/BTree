@@ -1,10 +1,11 @@
-CFLAGS = -fprofile-arcs -ftest-coverage
-all: tests
-tests: tests.o btree.o
-	gcc $(CFLAGS) btree.o tests.o -o tests 
-tests.o: tests.c 
-	gcc $(CFLAGS) -c tests.c -o tests.o 
-stack.o: btree.c
-	gcc $(CFLAGS) -c btree.c -o btree.o 
-clean: 
-	rm -rf tests btree *.o *.gcov *.gcda *.gcno
+FLAGS = -fprofile-arcs -ftest-coverage
+all: a.out
+
+a.out: tests.o btree.o
+	gcc $(FLAGS) btree.o tests.o -o a.out
+tests.o: tests.c
+	gcc $(FLAGS) -c tests.c -o tests.o
+btree.o: btree.c
+	gcc $(FLAGS) -c btree.c -o btree.o 
+clean:
+	rm -rf a.out tests btree *.o *.gcov *.gcda *.gcno
