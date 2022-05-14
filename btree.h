@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+
 #define NODE_ORDER		3  //degree of tree//
 #define NODE_POINTERS	(NODE_ORDER*2)
 #define NODE_KEYS		NODE_POINTERS - 1 

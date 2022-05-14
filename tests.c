@@ -1,4 +1,6 @@
 #include "btree.h"
+#include <unistd.h>
+#include <stdlib.h>
 int main() {
     BTREE_ERR err;
 
@@ -63,11 +65,6 @@ int main() {
         fprintf(stdout, "Test_16\t->\tFAILED\n");
     else
         fprintf(stdout, "Test_16\t->\tPASSED\n");
-
-    BTree *tree = create_btree(&err);
-    Node *left = create_node(&err);
-    Node *right = create_node(&err);
-
     
     //Tests with dataset//
     int array[] = {1, -11, 12, 13, 15, 16, 17, 18, 19, 20, 25, 28, 29, 31,
@@ -149,5 +146,9 @@ int main() {
         fprintf(stdout, "Test_211\t->\tFAILED\n");
     else
         fprintf(stdout, "Test_212\t->\tPASSED\n");
+    btree_delete(B, &err);
+    node_delete(k, &err);
+    node_delete(kk, &err);
+    node_delete(f, &err);
     return 0;
 }

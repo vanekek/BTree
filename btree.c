@@ -1,4 +1,5 @@
 #include "btree.h"
+#include <stdlib.h>
 //Function allocates node, sets default values for properties//
 Node *create_node(BTREE_ERR *err) {
     
@@ -8,7 +9,7 @@ Node *create_node(BTREE_ERR *err) {
 		fprintf(stderr, "Out of memory\n");
 		if (err != NULL)
 			*err = EMALLOC;
-		return;
+		return NULL;
 	}
 
 	for (int i = 0; i < NODE_KEYS; i++) {
@@ -34,7 +35,7 @@ BTree *create_btree(BTREE_ERR *err) {
 		fprintf(stderr, "Out of memory\n");
 		if (err != NULL)
 			*err = EMALLOC;
-		return;
+		return NULL;
 	}
 
 	Node *head = create_node(err);
@@ -142,7 +143,7 @@ void split_child(Node *parent, int i, BTREE_ERR *err) {
 		fprintf(stderr, "Invalid argument\n");
 		if (err != NULL)
 			*err = EINVARG;
-		return NULL;
+		return;
 	}
 
 	Node *splitted_node = parent->child[i];
@@ -163,6 +164,7 @@ void split_child(Node *parent, int i, BTREE_ERR *err) {
 	insert_node(parent, splitted_node->keys[NODE_ORDER - 1], err); //we are lifting median key to parent//
 	parent->child[i + 1] = new_node;
 }
+//new comment//
 /* Insert function inserts key into tree*/
 void insert(int key, BTree *tree, BTREE_ERR *err) {
 	
@@ -224,7 +226,7 @@ int merge_children(BTree *tree, Node *parent, int i, BTREE_ERR *err) {
 		fprintf(stderr, "Invalid argument\n");
 		if (err != NULL)
 			*err = EINVARG;
-		return NULL;
+		return -1;
 	}
 	
 	Node *left = parent->child[i];
@@ -293,7 +295,7 @@ void delete(BTree *tree, int key, BTREE_ERR *err) {
 		fprintf(stderr, "Invalid argument\n");
 		if (err != NULL)
 			*err = EINVARG;
-		return NULL;
+		return;
 	}
 	
 	Node *current = tree->root;
@@ -336,7 +338,7 @@ void delete(BTree *tree, int key, BTREE_ERR *err) {
 					fprintf(stderr, "Invalid argument: key %d was not found in btree\n", key);
 					if (err != NULL)
 						*err = EINVARG;
-					return NULL;
+					return;
 			}
 			int modification = check_size(tree, current, i, err);
 			if (modification == 1) {
